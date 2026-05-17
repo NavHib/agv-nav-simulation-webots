@@ -1,0 +1,143 @@
+from controller import Robot
+
+# =========================================================
+# AGV LINE FOLLOWER PID - ROUTE C RE-FIXED
+# MENGGUNAKAN BASE PROGRAM STABIL ASLI
+# =========================================================
+
+robot = Robot()
+timestep = int(robot.getBasicTimeStep())
+
+# =========================================================
+# SENSOR
+# =========================================================
+sensors = []
+for i in range(8):
+    sensor = robot.getDevice(f'PS{i}')
+    sensor.enable(timestep)
+    sensors.append(sensor)
+
+# =========================================================
+# MOTOR
+# =========================================================
+left_motor = robot.getDevice('left wheel motor')
+right_motor = robot.getDevice('right wheel motor')
+
+left_motor.setPosition(float('inf'))
+right_motor.setPosition(float('inf'))
+
+left_motor.setVelocity(0)
+right_motor.setVelocity(0)
+
+# =========================================================
+# PID PARAMETER (Kembali ke parameter asli kamu)
+# =========================================================
+Kp = 0.45
+Kd = 0.08
+last_error = 0
+
+# =========================================================
+# SPEED PARAMETER
+# =========================================================
+NORMAL_SPEED = 1.6
+PREPARE_SPEED = 0.8
+TURN_SPEED = 0.5
+MAX_SPEED = 4.0
+
+# =========================================================
+# THRESHOLD (Kembali ke threshold stabil pertama kamu)
+# =========================================================
+threshold = 120
+node_lock = 0
+
+# =========================================================
+# MAIN LOOP
+# =========================================================
+while robot.step(timestep) != -1:
+
+    biner = ""
+    error = 0
+    jumlah_kena = 0
+
+    # =====================================================
+    # BACA SENSOR (Menggunakan logika asli yang terbukti jalan)
+    # =====================================================
+    for i in range(8):
+        val = sensors[i].getValue()
+
+        # Jika garis hitam nilainya di bawah threshold
+        if val < threshold:
+            biner += "0"
+            error += (i - 3.5)
+            jumlah_kena += 1
+        else:
+            biner += "1"
+
+    # Debug untuk melihat kecocokan biner dengan posisi robot
+    print("ROUTE C | Biner:", biner, "| Kena:", jumlah_kena)
+
+    # =====================================================
+    # PREPARE TURN
+    # =====================================================
+    if (biner == "01111111" or biner == "11111110"):
+        current_speed = PREPARE_SPEED
+    else:
+        current_speed = NORMAL_SPEED
+
+    # =====================================================
+    # DETEKSI NODE INTERSECTION: PAKSA MAJU LURUS (SKIP ALL)
+    # =====================================================
+    if biner == "11111111" and node_lock == 0:
+        node_lock = 1
+        
+        # Karakteristik Route C: Setiap ketemu pertigaan kotak, terjang lurus!
+        print(">>> PERTIGAAN DI-SKIP: MAJU LURUS <<<")
+        left_motor.setVelocity(NORMAL_SPEED)
+        right_motor.setVelocity(NORMAL_SPEED)
+        continue
+
+    # =====================================================
+    # RESET NODE LOCK
+    # =====================================================
+    if biner == "00111100" or "0" in biner:
+        node_lock = 0
+
+    # =====================================================
+    # PID NORMAL
+    # =====================================================
+    if jumlah_kena > 0:
+        avg_error = error / jumlah_kena
+
+        derivative = avg_error - last_error
+        diff = (Kp * avg_error) + (Kd * derivative)
+        last_error = avg_error
+
+        # Limit PID
+        if diff > 1.8: diff = 1.8
+        if diff < -1.8: diff = -1.8
+
+        # Penentuan Speed
+        if abs(avg_error) > 2:
+            speed = TURN_SPEED
+        else:
+            speed = current_speed
+
+        # Motor Pergerakan PID
+        left_speed = speed - diff
+        right_speed = speed + diff
+
+        # Limit Kecepatan Motor
+        left_speed = max(min(left_speed, MAX_SPEED), -MAX_SPEED)
+        right_speed = max(min(right_speed, MAX_SPEED), -MAX_SPEED)
+
+        left_motor.setVelocity(left_speed)
+        right_motor.setVelocity(right_speed)
+
+    # =====================================================
+    # LOST LINE (Jika lepas dari garis, balikkan ke arah kanan luar)
+    # =====================================================
+    else:
+        # Jika robot keluar jalur, buat dia berputar halus ke kanan 
+        # untuk mencari kembali garis terluar (Route C)
+        left_motor.setVelocity(0.4)
+        right_motor.setVelocity(1.0)

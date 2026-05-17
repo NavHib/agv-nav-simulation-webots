@@ -1,0 +1,168 @@
+from controller import Robot
+
+# =========================================================
+# AGV LINE FOLLOWER PID
+# ROUTE B FINAL - ANTI KACAU STRIP/START LOCATION
+# BEL0K KANAN DI INTERSECTION 1 (JALUR ATAS)
+# BEL0K KIRI DI INTERSECTION 2 (JALUR ATAS)
+# =========================================================
+
+robot = Robot()
+timestep = int(robot.getBasicTimeStep())
+
+# =========================================================
+# SENSOR & MOTOR
+# =========================================================
+sensors = []
+for i in range(8):
+    sensor = robot.getDevice(f'PS{i}')
+    sensor.enable(timestep)
+    sensors.append(sensor)
+
+left_motor = robot.getDevice('left wheel motor')
+right_motor = robot.getDevice('right wheel motor')
+left_motor.setPosition(float('inf'))
+right_motor.setPosition(float('inf'))
+left_motor.setVelocity(0)
+right_motor.setVelocity(0)
+
+# =========================================================
+# PID PARAMETER
+# =========================================================
+Kp = 0.45
+Kd = 0.08
+last_error = 0
+
+# =========================================================
+# SPEED PARAMETER
+# =========================================================
+NORMAL_SPEED = 1.6
+PREPARE_SPEED = 0.8
+TURN_SPEED = 0.7
+MAX_SPEED = 4.0
+
+threshold = 120
+
+# =========================================================
+# NEW SYSTEM: STATE MACHINE LINTASAN
+# =========================================================
+# State 0: Mencari Jalur Utama Atas (Abaikan intersection jika belum melewati tikungan kiri pertama)
+# State 1: Sudah di jalur atas, siap menghitung Intersection 1 & 2
+lintasan_state = 0 
+
+node_count = 0
+node_lock = 0
+turn_mode = 0
+turn_timer = 0
+TURN_DURATION = 16
+
+while robot.step(timestep) != -1:
+    biner = ""
+    error = 0
+    jumlah_kena = 0
+
+    # Baca Sensor
+    for i in range(8):
+        val = sensors[i].getValue()
+        if val < threshold:
+            biner += "0"
+            error += (i - 3.5)
+            jumlah_kena += 1
+        else:
+            biner += "1"
+
+    # =====================================================
+    # DETEKSI POSISI LINTASAN SECARA OTOMATIS
+    # =====================================================
+    # Jika robot mendeteksi error sangat negatif (banting kiri tajam),
+    # itu adalah tanda robot sedang menanjak di tikungan kiri paling kiri (menuju jalur atas).
+    if error < -2.5 and lintasan_state == 0:
+        lintasan_state = 1
+        print("=== ROBOT MEMASUKI JALUR UTAMA ATAS ===")
+
+    # Debug Monitor
+    print(
+        "ROUTE B POSITION-FREE",
+        "| State:", lintasan_state,
+        "| Node:", node_count,
+        "| Biner:", biner
+    )
+
+    # Prepare Speed
+    if (biner == "01111111" or biner == "11111110"):
+        current_speed = PREPARE_SPEED
+    else:
+        current_speed = NORMAL_SPEED
+
+    # =====================================================
+    # DETEKSI NODE (HANYA AKTIF JIKA SUDAH DI JALUR ATAS)
+    # =====================================================
+    if biner == "11111111" and node_lock == 0:
+        node_lock = 1
+        
+        if lintasan_state == 1:
+            node_count += 1
+
+            # NODE 1 -> BELOK KANAN (Intersection 1 ke Route B)
+            if node_count == 1:
+                turn_mode = 1
+                turn_timer = TURN_DURATION
+                print(">>> INTERSECTION 1: BELOK KANAN")
+
+            # NODE 2 -> BELOK KIRI (Intersection 2 dari Route B keluar)
+            elif node_count == 2:
+                turn_mode = 2
+                turn_timer = TURN_DURATION
+                print(">>> INTERSECTION 2: BELOK KIRI")
+
+    # =====================================================
+    # RESET SYSTEM SIKLUS
+    # =====================================================
+    if biner == "00111100":
+        node_lock = 0
+        
+        # Reset total saat kembali ke baseline bawah
+        if node_count >= 2 and turn_mode == 0:
+            node_count = 0
+            lintasan_state = 0  # Kembali berburu tikungan naik untuk lap berikutnya
+            print("=== SIKLUS LAP SELESAI, RE-CALIBRATION LOCATION ===")
+
+    # Execution Turn Kanan
+    if turn_mode == 1:
+        left_motor.setVelocity(0.2)
+        right_motor.setVelocity(1.0)
+        turn_timer -= 1
+        if turn_timer <= 0: turn_mode = 0
+        continue
+
+    # Execution Turn Kiri
+    if turn_mode == 2:
+        left_motor.setVelocity(1.0)
+        right_motor.setVelocity(0.2)
+        turn_timer -= 1
+        if turn_timer <= 0: turn_mode = 0
+        continue
+
+    # PID Control
+    if jumlah_kena > 0:
+        avg_error = error / jumlah_kena
+        derivative = avg_error - last_error
+        diff = (Kp * avg_error) + (Kd * derivative)
+        last_error = avg_error
+
+        if diff > 1.8: diff = 1.8
+        if diff < -1.8: diff = -1.8
+
+        speed = TURN_SPEED if abs(avg_error) > 2 else current_speed
+        left_speed = speed - diff
+        right_speed = speed + diff
+
+        left_speed = max(min(left_speed, MAX_SPEED), -MAX_SPEED)
+        right_speed = max(min(right_speed, MAX_SPEED), -MAX_SPEED)
+
+        left_motor.setVelocity(left_speed)
+        right_motor.setVelocity(right_speed)
+    else:
+        # Lost Line Recovery
+        left_motor.setVelocity(1.2)
+        right_motor.setVelocity(0.2)

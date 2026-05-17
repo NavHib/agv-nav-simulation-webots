@@ -1,0 +1,96 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/gctronic/e-puck/protos/E-puck.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation 0.5183426498408902 -0.5180504860616088 -0.6804003169070802 4.335963503157165
+  position 0.014027708103522885 -0.7232936867553377 2.4736264848374883
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 1
+  direction 0.1 -0.5 0.3
+}
+RectangleArena {
+  rotation -1 0 0 0.5235953071795861
+  floorTileSize 1 1
+  floorAppearance PBRAppearance {
+    baseColorMap ImageTexture {
+      url [
+        "LINE.png"
+      ]
+    }
+  }
+}
+E-puck {
+  hidden position_0_0 1772.05840813371
+  hidden position_0_1 1660.0639696065086
+  hidden linearVelocity_0 -0.003821580943499159 0.0138851971673089 -0.008000820340047284
+  hidden angularVelocity_0 -0.0017344558119237576 -0.4848095981637314 -0.8383236333696212
+  hidden rotation_1 0 1 0 0.6085640727975705
+  hidden linearVelocity_1 -0.009720881511797575 0.03509155537490992 -0.0202474007993252
+  hidden angularVelocity_1 -1.9062338113598554 -0.8818682059504364 -0.613598161460278
+  hidden rotation_2 0 0.9999999999999999 0 3.129984239279407
+  hidden linearVelocity_2 0.0020945157677964565 -0.0073088900409421995 0.004244721524923566
+  hidden angularVelocity_2 0.5402072799077107 -0.36862250995917617 -0.9056730014873
+  translation -0.41565449793798753 -0.1321778773226156 0.07626793342964917
+  rotation -0.2065475215429758 0.25478977370320305 0.9446799947922706 1.8374219780987187
+  controller "my_controller"
+  turretSlot [
+    DistanceSensor {
+      translation 0.02 0.007 -0.04
+      rotation 0 1 0 1.5708
+      name "PS0"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 0.005 -0.04
+      rotation 0 1 0 1.5708
+      name "PS1"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 0.003 -0.04
+      rotation 0 1 0 1.5708
+      name "PS2"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 0.001 -0.04
+      rotation 0 1 0 1.5708
+      name "PS3"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 -0.001 -0.04
+      rotation 0 1 0 1.5708
+      name "PS4"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 -0.003 -0.04
+      rotation 0 1 0 1.5708
+      name "PS5"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 -0.005 -0.04
+      rotation 0 1 0 1.5708
+      name "PS6"
+      type "infra-red"
+    }
+    DistanceSensor {
+      translation 0.02 -0.007 -0.04
+      rotation 0.3574058186283875 0.8628565621288802 -0.35740681862788 1.71777
+      name "PS7"
+      type "infra-red"
+    }
+  ]
+}
