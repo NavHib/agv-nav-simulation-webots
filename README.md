@@ -1,4 +1,4 @@
-<img width="1000" height="1000" alt="Presentation1" src="https://github.com/user-attachments/assets/baf6c7f6-dec0-405b-9fbb-48d10662c314" /># agv-nav-simulation-webots
+/># agv-nav-simulation-webots
 AGV line follower simulation using Webots and Python. Implements robust PID control for multi-route navigation (Routes A, B, C)
 
 # 🤖 Industrial AGV Line Follower - Webots Simulation
