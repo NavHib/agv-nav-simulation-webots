@@ -1,4 +1,4 @@
-# agv-nav-simulation-webots
+<img width="1000" height="1000" alt="Presentation1" src="https://github.com/user-attachments/assets/baf6c7f6-dec0-405b-9fbb-48d10662c314" /># agv-nav-simulation-webots
 AGV line follower simulation using Webots and Python. Implements robust PID control for multi-route navigation (Routes A, B, C)
 
 # 🤖 Industrial AGV Line Follower - Webots Simulation
@@ -19,7 +19,8 @@ Robot dikonfigurasi menggunakan 8-channel sensor inframerah (`PS0` - `PS7`) untu
 
 ### 2. Layout Sirkuit Lintasan (Line Track)
 Sirkuit multi-rute tempat pengujian performa algoritma navigasi robot untuk Route A, B, dan C.
-<img width="1000" height="1000" alt="LINE" src="https://github.com/user-attachments/assets/3d7f36fe-e3d7-4afb-bcbb-c66a0a1718e9" />
+<img width="1000" height="1000" alt="Presentation1" src="https://github.com/user-attachments/assets/2a362737-ba7b-490c-98ef-a40cd625330c" />
+
 ---
 ## Link siimulasi 
 1. line A: https://drive.google.com/file/d/1pwZipJ-K8FGP8rHXstIUKIdxK_hBBJkd/view?usp=drive_link 
